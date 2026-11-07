@@ -6,8 +6,9 @@ WORKDIR /app
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 
+# Install dependencies
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 RUN pnpm run build
