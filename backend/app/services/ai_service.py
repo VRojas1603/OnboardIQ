@@ -7,6 +7,7 @@ Provides robust fallbacks to guaranteed high-quality templates if API keys are m
 
 import json
 import logging
+import time
 import httpx
 from app.config import settings
 
@@ -56,19 +57,40 @@ class AIService:
             "max_tokens": 1200
         }
 
-        try:
-            with httpx.Client(timeout=25.0) as client:
-                response = client.post(url, headers=headers, json=payload)
-                if response.status_code == 200:
-                    data = response.json()
-                    content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    return content.strip()
-                else:
-                    logger.error(f"Vultr Inference API error {response.status_code}: {response.text}")
-                    return ""
-        except Exception as e:
-            logger.error(f"Failed to communicate with Vultr Serverless Inference: {e}")
-            return ""
+        max_retries = 3
+        backoff_delays = [1.0, 2.0, 4.0]
+
+        for attempt in range(max_retries):
+            try:
+                with httpx.Client(timeout=25.0) as client:
+                    response = client.post(url, headers=headers, json=payload)
+                    if response.status_code == 200:
+                        data = response.json()
+                        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                        return content.strip()
+                    elif response.status_code in (429, 500, 502, 503, 504):
+                        logger.warning(
+                            f"Vultr Inference API transient error {response.status_code} on attempt {attempt + 1}/{max_retries}: {response.text}"
+                        )
+                        if attempt < max_retries - 1:
+                            time.sleep(backoff_delays[attempt])
+                            continue
+                    else:
+                        logger.error(f"Vultr Inference API error {response.status_code}: {response.text}")
+                        return ""
+            except (httpx.TimeoutException, httpx.NetworkError) as e:
+                logger.warning(
+                    f"Network error communicating with Vultr Serverless Inference (attempt {attempt + 1}/{max_retries}): {e}"
+                )
+                if attempt < max_retries - 1:
+                    time.sleep(backoff_delays[attempt])
+                    continue
+            except Exception as e:
+                logger.error(f"Unexpected error communicating with Vultr Serverless Inference: {e}")
+                return ""
+
+        logger.error(f"Exhausted {max_retries} attempts communicating with Vultr Serverless Inference. Falling back to template.")
+        return ""
 
     def generate_welcome_email(self, hire_name: str, role: str, department: str, manager_name: str, start_date: str) -> dict:
         """
