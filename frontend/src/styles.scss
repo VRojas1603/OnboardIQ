@@ -1,0 +1,150 @@
+@use '@angular/material' as mat;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@include mat.core();
+
+
+$app-m3-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$spring-green-palette,
+    tertiary: mat.$orange-palette,
+  ),
+  typography: (
+    plain-family: 'Inter, system-ui, sans-serif',
+    brand-family: 'Inter, system-ui, sans-serif'
+  ),
+  density: (
+    scale: 0
+  )
+));
+
+:root {
+  @include mat.all-component-themes($app-m3-theme);
+  --mat-sys-color-primary: #00b48a;
+  --mat-sys-color-on-primary: #ffffff;
+  --mat-sys-color-primary-container: #e6faf5;
+  --mat-sys-color-on-primary-container: #00382b;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #fafafa;
+  color: #0a0a0a;
+  margin: 0;
+  padding: 0;
+}
+
+
+.btn-pill-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  border-radius: 9999px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  border: 1px solid #0a0a0a;
+  &:hover {
+    background-color: #1c1c1e;
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-pill-mint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #00d4a4;
+  color: #0a0a0a;
+  border-radius: 9999px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  border: 1px solid #00d4a4;
+  box-shadow: 0 2px 10px rgba(0, 212, 164, 0.25);
+  &:hover {
+    background-color: #00b48a;
+    box-shadow: 0 4px 16px rgba(0, 180, 138, 0.35);
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+.btn-pill-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  color: #0a0a0a;
+  border-radius: 9999px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #e5e5e5;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  &:hover {
+    background-color: #f7f7f7;
+    border-color: #d4d4d4;
+  }
+}
+
+.card-surface {
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.code-surface {
+  background-color: #1c1c1e;
+  color: #f7f7f7;
+  font-family: 'Geist Mono', monospace;
+  border-radius: 8px;
+  border: 1px solid #2d2d30;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}

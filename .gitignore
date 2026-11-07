@@ -1,0 +1,111 @@
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# ==========================================
+# Databases & Local SQLite State
+# ==========================================
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+onboardiq.db
+backend/onboardiq.db
+
+# ==========================================
+# Python & Backend Virtual Environments
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+backend/venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Linting caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ==========================================
+# Node.js, Angular & Frontend Build
+# ==========================================
+node_modules/
+frontend/node_modules/
+.pnpm-store/
+.npm/
+
+# Angular build artifacts
+.angular/
+frontend/.angular/
+frontend/dist/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================================
+# Temporary Hackathon Research & Scratch Files
+# ==========================================
+docs/
+scratch/
+tmp/
+temp/
+*.tmp
+test_workflow.py
+
+# ==========================================
+# Operating System & IDE Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
