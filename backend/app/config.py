@@ -37,7 +37,7 @@ class Settings(BaseSettings):
 
     # Slack Integration
     SLACK_BOT_TOKEN: str = os.getenv("SLACK_BOT_TOKEN", "")
-    SLACK_DEFAULT_CHANNEL: str = os.getenv("SLACK_DEFAULT_CHANNEL", "general")
+    SLACK_DEFAULT_CHANNEL: str = os.getenv("SLACK_DEFAULT_CHANNEL", "hackathon-demo")
 
     @property
     def cors_origins_list(self) -> list[str]:

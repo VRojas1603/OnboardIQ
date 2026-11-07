@@ -5,16 +5,34 @@ Establishes SQLAlchemy engine, declarative base, session factories,
 and database lifecycle management utilities for SQLite persistence.
 """
 
+from typing import Any
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.config import settings
 
-# SQLite specific connect_args to allow multithreaded requests
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+# Normalize postgres:// to postgresql:// (common in Supabase and PaaS URLs)
+raw_db_url = settings.DATABASE_URL
+if raw_db_url.startswith("postgres://"):
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+
+connect_args: dict[str, Any] = {}
+engine_kwargs: dict[str, Any] = {"pool_pre_ping": True}
+
+if raw_db_url.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+    engine_kwargs = {}
+else:
+    # PostgreSQL / Supabase pooler configuration (Session & Transaction modes)
+    engine_kwargs.update({
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_recycle": 300,
+    })
 
 engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args=connect_args
+    raw_db_url,
+    connect_args=connect_args,
+    **engine_kwargs
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
