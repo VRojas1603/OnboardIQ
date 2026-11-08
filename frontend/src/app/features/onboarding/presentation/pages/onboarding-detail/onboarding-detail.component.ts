@@ -16,6 +16,7 @@ import { OnboardingFacade } from '../../../application/facades/onboarding.facade
 import { ApprovalFacade } from '../../../../approval/application/facades/approval.facade';
 import { OnboardingCase, calculateCaseProgress } from '../../../domain/models/onboarding-case.entity';
 import { ApprovalDialogComponent } from '../../../../approval/presentation/components/approval-dialog/approval-dialog.component';
+import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-dialog/confirm-delete-dialog.component';
 
 @Component({
   selector: 'app-onboarding-detail',
@@ -56,6 +57,10 @@ import { ApprovalDialogComponent } from '../../../../approval/presentation/compo
               <span>Authorize Next Step</span>
             </button>
           }
+          <button (click)="openDeleteDialog()" class="btn-pill-secondary !text-red-600 hover:!bg-red-50 hover:!border-red-200 text-xs !py-2 !px-4" title="Delete onboarding case and all data">
+            <span class="material-symbols-outlined text-[16px]">delete</span>
+            <span>Delete Case</span>
+          </button>
         </div>
       </div>
 
@@ -420,6 +425,28 @@ export class OnboardingDetailComponent implements OnInit {
     dialogRef.afterClosed().subscribe((approved: boolean) => {
       if (approved) {
         setTimeout(() => this.refresh(), 800);
+      }
+    });
+  }
+
+  /**
+   * Open confirmation dialog and delete case, returning to dashboard upon confirmation.
+   */
+  openDeleteDialog(): void {
+    const c = this.activeCase();
+    if (!c) return;
+
+    const dialogRef = this.dialog.open(ConfirmDeleteDialogComponent, {
+      data: {
+        caseId: c.id,
+        employeeName: c.employeeName,
+        role: c.role
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        this.onboardingFacade.deleteCase(c.id, true);
       }
     });
   }

@@ -59,4 +59,11 @@ export abstract class OnboardingRepositoryPort {
    * @param params Candidate and manager intake form parameters.
    */
   abstract createCase(params: CreateCaseParams): Observable<OnboardingCase>;
+
+  /**
+   * Delete an onboarding case and all associated cascading workflow steps and approval items.
+   *
+   * @param id Primary key ID of the onboarding case to delete.
+   */
+  abstract deleteCase(id: number): Observable<void>;
 }

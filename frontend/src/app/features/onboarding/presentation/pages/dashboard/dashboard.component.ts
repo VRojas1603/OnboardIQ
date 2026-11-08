@@ -10,14 +10,16 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { OnboardingFacade } from '../../../application/facades/onboarding.facade';
 import { ApprovalFacade } from '../../../../approval/application/facades/approval.facade';
 import { OnboardingCase, calculateCaseProgress } from '../../../domain/models/onboarding-case.entity';
+import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-dialog/confirm-delete-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, MatDialogModule],
   template: `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
@@ -249,10 +251,15 @@ import { OnboardingCase, calculateCaseProgress } from '../../../domain/models/on
 
                     <!-- Actions -->
                     <td class="py-4 px-6 text-right">
-                      <a [routerLink]="['/cases', c.id]" class="btn-pill-secondary text-xs !py-1 !px-3 hover:!bg-ink hover:!text-white hover:!border-ink transition-all">
-                        <span>Inspect</span>
-                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
-                      </a>
+                      <div class="flex items-center justify-end space-x-2">
+                        <a [routerLink]="['/cases', c.id]" class="btn-pill-secondary text-xs !py-1 !px-3 hover:!bg-ink hover:!text-white hover:!border-ink transition-all">
+                          <span>Inspect</span>
+                          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        </a>
+                        <button (click)="openDeleteDialog(c)" class="p-1.5 text-steel hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete onboarding case and all data">
+                          <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      </div>
                     </td>
 
                   </tr>
@@ -270,6 +277,7 @@ import { OnboardingCase, calculateCaseProgress } from '../../../domain/models/on
 export class DashboardComponent {
   private readonly onboardingFacade = inject(OnboardingFacade);
   private readonly approvalFacade = inject(ApprovalFacade);
+  private readonly dialog = inject(MatDialog);
 
   /** Signal list of onboarding cases */
   readonly cases = this.onboardingFacade.cases;
@@ -310,5 +318,24 @@ export class DashboardComponent {
   refresh(): void {
     this.onboardingFacade.fetchCases();
     this.approvalFacade.fetchPendingApprovals();
+  }
+
+  /**
+   * Open confirmation dialog to delete candidate case and cascading execution records.
+   */
+  openDeleteDialog(c: OnboardingCase): void {
+    const ref = this.dialog.open(ConfirmDeleteDialogComponent, {
+      data: {
+        caseId: c.id,
+        employeeName: c.employeeName,
+        role: c.role
+      }
+    });
+
+    ref.afterClosed().subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        this.onboardingFacade.deleteCase(c.id, false);
+      }
+    });
   }
 }
