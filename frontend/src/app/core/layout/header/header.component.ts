@@ -22,9 +22,11 @@ import { ApprovalFacade } from '../../../features/approval/application/facades/a
           <!-- Brand Mark -->
           <div class="flex items-center space-x-6">
             <a routerLink="/dashboard" class="flex items-center space-x-2.5 group">
-              <div class="w-8 h-8 rounded-lg bg-ink flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                <span class="w-3 h-3 rounded-full bg-mint"></span>
-              </div>
+              <img 
+                src="logo.png" 
+                alt="OnboardIQ Logo" 
+                class="w-9 h-9 rounded-lg object-contain shadow-sm border border-hairline bg-white p-0.5 group-hover:scale-105 transition-transform"
+              />
               <div class="flex items-baseline space-x-1.5">
                 <span class="font-bold text-lg text-ink tracking-tight">OnboardIQ</span>
                 <span class="text-xs px-2 py-0.5 rounded-full bg-surface-soft border border-hairline text-steel font-medium">Agent Rush</span>
