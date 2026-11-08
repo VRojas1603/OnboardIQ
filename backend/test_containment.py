@@ -150,15 +150,66 @@ def test_managerial_rejection_safe_halt():
     
     # Verify Step 1 is safely marked 'skipped' without side effects
     db.refresh(step1)
-    assert step1.status == "skipped", f"Step 1 status should be 'skipped', got {step1.status}"
+    assert step1.status == "rejected", f"Step 1 status should be 'rejected', got {step1.status}"
+    assert case.status == "halted", f"Case status should be 'halted', got {case.status}"
     assert approval is not None and approval.decision == "rejected"
     
     # Verify the workflow engine progressed safely to Step 2 without crashing
     step2 = case.steps[1]
-    assert step2.status == "awaiting_approval", f"Step 2 should now be 'awaiting_approval', got {step2.status}"
-    print("  [PASS] Rejected step transitioned to 'skipped' with audit rationale logged.")
-    print(f"  [PASS] Pipeline safely advanced to next checkpoint (Step 2: '{step2.step_key}').")
+    assert step2.status == "pending", f"Step 2 must remain 'pending' after rejection halt, got {step2.status}"
+    print("  [PASS] Rejected step strictly transitioned to 'rejected' with case status='halted'.")
+    print("  [PASS] Pipeline strictly halted — downstream steps isolated in 'pending' state.")
     
+    # Test resume workflow capability
+    resumed_case = workflow_engine.resume_workflow(case.id, db)
+    assert resumed_case is not None and resumed_case.status == "awaiting_approval"
+    db.refresh(step1)
+    assert step1.status == "awaiting_approval"
+    print("  [PASS] Resume workflow successfully un-halted case and re-opened step for review.")
+    
+    db.close()
+
+def test_managerial_skip_step():
+    """
+    Test 4: Managerial Step Skipping
+    Proves that a managerial skip transitions the step to 'skipped',
+    bypasses external mutations, and safely continues the pipeline to Step 2.
+    """
+    print("\n--- Test 4: Managerial Step Skipping ---")
+    db = SessionLocal()
+    case = OnboardingCase(
+        hire_name="Jordan Skip Test",
+        hire_email="jordan.skip@example.com",
+        role="Product Designer",
+        department="Design Operations",
+        manager_name="Head of Design",
+        manager_email="head.design@example.com",
+        start_date="2026-12-05",
+        status="created"
+    )
+    db.add(case)
+    db.commit()
+    db.refresh(case)
+    
+    workflow_engine.initialize_case_steps(db, case)
+    workflow_engine.run_workflow(case.id, db)
+    db.refresh(case)
+    
+    step1 = case.steps[0]
+    assert step1.approval_item is not None
+    
+    approval = workflow_engine.handle_approval(
+        approval_id=step1.approval_item.id,
+        decision="skipped",
+        comment="Skip AI document generation for contractor.",
+        db=db
+    )
+    db.refresh(case)
+    db.refresh(step1)
+    assert step1.status == "skipped"
+    step2 = case.steps[1]
+    assert step2.status == "awaiting_approval"
+    print("  [PASS] Skipped step transitioned to 'skipped' and pipeline safely advanced to Step 2.")
     db.close()
 
 def main():
@@ -169,6 +220,7 @@ def main():
     test_adversarial_prompt_injection_containment()
     test_hitl_isolation_barrier()
     test_managerial_rejection_safe_halt()
+    test_managerial_skip_step()
     
     print("\n================================================================")
     print("  [ALL CONTAINMENT TESTS PASSED] — Enterprise Security Verified  ")

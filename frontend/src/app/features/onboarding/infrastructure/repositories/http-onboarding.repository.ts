@@ -67,4 +67,16 @@ export class HttpOnboardingRepository implements OnboardingRepositoryPort {
   deleteCase(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  /**
+   * Un-halt and resume a halted onboarding case.
+   *
+   * @param id Target case ID.
+   * @returns Observable emitting refreshed domain OnboardingCase.
+   */
+  resumeWorkflow(id: number): Observable<OnboardingCase> {
+    return this.http.post<OnboardingCaseDetailDto>(`${this.baseUrl}/${id}/resume`, {}).pipe(
+      map(OnboardingMapper.fromDetailDto)
+    );
+  }
 }

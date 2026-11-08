@@ -17,7 +17,7 @@ export interface DecideApprovalParams {
   approvalId: number;
 
   /** Chosen human decision */
-  decision: 'approved' | 'rejected';
+  decision: 'approved' | 'rejected' | 'skipped';
 
   /** Optional reviewer note or rationale */
   comment?: string;

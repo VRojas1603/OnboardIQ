@@ -212,7 +212,7 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
                         <div class="w-full h-1.5 rounded-full bg-surface-soft border border-hairline overflow-hidden">
                           <div 
                             class="h-full rounded-full transition-all duration-500"
-                            [ngClass]="getProgress(c) === 100 ? 'bg-emerald-500' : 'bg-mint'"
+                            [ngClass]="c.status === 'halted' ? 'bg-red-500' : getProgress(c) === 100 ? 'bg-emerald-500' : 'bg-mint'"
                             [style.width.%]="getProgress(c)"
                           ></div>
                         </div>
@@ -228,7 +228,19 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
                             <span>Completed</span>
                           </span>
                         }
+                        @case ('halted') {
+                          <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-[11px] font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            <span>Halted (Rejected)</span>
+                          </span>
+                        }
                         @case ('paused') {
+                          <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            <span>Awaiting Review</span>
+                          </span>
+                        }
+                        @case ('awaiting_approval') {
                           <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-medium">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                             <span>Awaiting Review</span>

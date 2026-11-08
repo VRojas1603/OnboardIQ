@@ -106,6 +106,26 @@ def reject_step(
     if approval.decision != "pending":
         raise HTTPException(status_code=400, detail=f"Item already decided: {approval.decision}")
 
-    comment = payload.comment or "Rejected / Skipped by Manager"
+    comment = payload.comment or "Rejected & Halted by Manager"
     updated = workflow_engine.handle_approval(approval_id, "rejected", comment, db)
+    return updated
+
+@router.post("/{approval_id}/skip", response_model=ApprovalItemResponse)
+@router.post("/{approval_id}/skipped", response_model=ApprovalItemResponse)
+def skip_step(
+    approval_id: int,
+    payload: ApprovalDecisionRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Skip a pending step and continue the remaining workflow without executing it.
+    """
+    approval = db.query(ApprovalItem).filter(ApprovalItem.id == approval_id).first()
+    if not approval:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+    if approval.decision != "pending":
+        raise HTTPException(status_code=400, detail=f"Item already decided: {approval.decision}")
+
+    comment = payload.comment or "Skipped by Manager"
+    updated = workflow_engine.handle_approval(approval_id, "skipped", comment, db)
     return updated

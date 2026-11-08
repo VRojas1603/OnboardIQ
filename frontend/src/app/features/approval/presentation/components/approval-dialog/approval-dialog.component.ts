@@ -98,27 +98,42 @@ export interface ApprovalDialogData {
       </div>
 
       <!-- Action Footer -->
-      <div class="mt-6 pt-4 border-t border-hairline flex items-center justify-end space-x-3">
+      <div class="mt-6 pt-4 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-3">
         <button 
           (click)="reject()" 
           [disabled]="isSubmitting"
-          class="btn-pill-secondary !text-brand-error hover:!bg-red-50 hover:!border-red-200 text-xs !py-2 !px-4"
+          class="btn-pill-secondary !text-brand-error hover:!bg-red-50 hover:!border-red-200 text-xs !py-2 !px-4 w-full sm:w-auto"
+          title="Halt the entire onboarding pipeline immediately"
         >
-          Reject & Halt
+          <span class="material-symbols-outlined text-[16px] mr-1">block</span>
+          <span>Reject & Halt Pipeline</span>
         </button>
-        <button 
-          (click)="approve()" 
-          [disabled]="isSubmitting"
-          class="btn-pill-mint text-xs !py-2 !px-5"
-        >
-          @if (isSubmitting) {
-            <span class="inline-block animate-spin mr-1">↻</span>
-            <span>Authorizing...</span>
-          } @else {
-            <span class="material-symbols-outlined text-[16px] mr-1">check_circle</span>
-            <span>Approve & Continue Workflow</span>
-          }
-        </button>
+
+        <div class="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
+          <button 
+            (click)="skip()" 
+            [disabled]="isSubmitting"
+            class="btn-pill-secondary text-xs !py-2 !px-4 hover:!bg-surface-soft"
+            title="Skip only this step and continue remaining onboarding workflow"
+          >
+            <span class="material-symbols-outlined text-[16px] mr-1">redo</span>
+            <span>Skip Step</span>
+          </button>
+
+          <button 
+            (click)="approve()" 
+            [disabled]="isSubmitting"
+            class="btn-pill-mint text-xs !py-2 !px-5"
+          >
+            @if (isSubmitting) {
+              <span class="inline-block animate-spin mr-1">↻</span>
+              <span>Authorizing...</span>
+            } @else {
+              <span class="material-symbols-outlined text-[16px] mr-1">check_circle</span>
+              <span>Approve & Continue</span>
+            }
+          </button>
+        </div>
       </div>
 
     </div>
@@ -188,11 +203,29 @@ export class ApprovalDialogComponent {
       {
         approvalId: this.data.approvalItem.id,
         decision: 'rejected',
-        comment: this.comment,
+        comment: this.comment || 'Rejected & Halted by Manager',
       },
       () => {
         this.isSubmitting = false;
         this.dialogRef.close(false);
+      }
+    );
+  }
+
+  /**
+   * Skip the current step and advance the remaining workflow.
+   */
+  skip(): void {
+    this.isSubmitting = true;
+    this.approvalFacade.decideApproval(
+      {
+        approvalId: this.data.approvalItem.id,
+        decision: 'skipped',
+        comment: this.comment || 'Skipped by Manager',
+      },
+      () => {
+        this.isSubmitting = false;
+        this.dialogRef.close(true);
       }
     );
   }
