@@ -39,7 +39,7 @@ export class HttpApprovalRepository implements ApprovalRepositoryPort {
    * @returns Observable emitting updated domain ApprovalItem instance.
    */
   decideApproval(params: DecideApprovalParams): Observable<ApprovalItem> {
-    const action = params.decision === 'approved' ? 'approve' : 'reject';
+    const action = params.decision === 'approved' ? 'approve' : params.decision === 'skipped' ? 'skip' : 'reject';
     const endpoint = `${this.baseUrl}/${params.approvalId}/${action}`;
     const payload: ApprovalDecisionRequestDto = {
       comment: params.comment || 'Approved by Manager'
