@@ -19,7 +19,11 @@ COPY --from=build /app/dist/onboardiq-frontend/browser /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Filter envsubst so internal Nginx variables ($host, $uri, etc.) are untouched
+# Add pre-entrypoint script to clean trailing slashes from BACKEND_URL
+COPY 18-clean-backend-url.envsh /docker-entrypoint.d/18-clean-backend-url.envsh
+RUN chmod +x /docker-entrypoint.d/18-clean-backend-url.envsh
+
+# Filter envsubst so internal Nginx variables ($proxy_host, $uri, etc.) are untouched
 ENV NGINX_ENVSUBST_FILTER='BACKEND_URL'
 ENV BACKEND_URL=http://backend:8000
 
