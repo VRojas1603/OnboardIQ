@@ -53,18 +53,31 @@ class Settings(BaseSettings):
     @property
     def resolved_database_url(self) -> str:
         """
-        Resolves relative SQLite database URLs to an absolute canonical path pointing to
-        backend/onboardiq.db, ensuring CLI tools, test suites, and uvicorn share the exact same database.
+        Resolves database URLs:
+        - Normalizes postgres:// to postgresql:// for SQLAlchemy PostgreSQL/Supabase compatibility.
+        - Canonicalizes relative SQLite paths to an absolute path, correctly handling root,
+          backend subfolder, and Docker container (/app) execution contexts.
         
         Returns:
             str: Normalized SQLAlchemy database URL.
         """
-        if self.DATABASE_URL.startswith("sqlite:///"):
-            raw_path = self.DATABASE_URL[len("sqlite:///"):]
+        raw_url = self.DATABASE_URL
+        if raw_url.startswith("postgres://"):
+            return raw_url.replace("postgres://", "postgresql://", 1)
+
+        if raw_url.startswith("sqlite:///"):
+            raw_path = raw_url[len("sqlite:///"):]
             if not os.path.isabs(raw_path) and ":memory:" not in raw_path:
-                abs_path = (root_dir / "backend" / "onboardiq.db").resolve()
+                if (Path.cwd() / "onboardiq.db").exists() or Path.cwd().name == "app":
+                    abs_path = (Path.cwd() / "onboardiq.db").resolve()
+                elif (Path.cwd() / "backend").exists():
+                    abs_path = (Path.cwd() / "backend" / "onboardiq.db").resolve()
+                else:
+                    backend_dir = Path(__file__).resolve().parent.parent
+                    abs_path = (backend_dir / "onboardiq.db").resolve()
                 return f"sqlite:///{abs_path.as_posix()}"
-        return self.DATABASE_URL
+
+        return raw_url
 
     @property
     def cors_origins_list(self) -> list[str]:
