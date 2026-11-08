@@ -102,10 +102,22 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
                     <span>Completed</span>
                   </span>
                 }
+                @case ('halted') {
+                  <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-[11px] font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    <span>Halted (Rejected)</span>
+                  </span>
+                }
                 @case ('paused') {
                   <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-medium">
                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                     <span>Paused for Review</span>
+                  </span>
+                }
+                @case ('awaiting_approval') {
+                  <span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Awaiting Review</span>
                   </span>
                 }
                 @default {
@@ -125,7 +137,7 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
               <div class="w-full h-2 rounded-full bg-surface-soft border border-hairline overflow-hidden">
                 <div 
                   class="h-full rounded-full transition-all duration-500"
-                  [ngClass]="progress() === 100 ? 'bg-emerald-500' : 'bg-mint'"
+                  [ngClass]="c.status === 'halted' ? 'bg-red-500' : progress() === 100 ? 'bg-emerald-500' : 'bg-mint'"
                   [style.width.%]="progress()"
                 ></div>
               </div>
@@ -133,6 +145,27 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
 
           </div>
         </div>
+
+        <!-- Workflow Halted Alert Banner (if manager rejected a step) -->
+        @if (c.status === 'halted') {
+          <div class="card-surface p-5 bg-gradient-to-r from-red-50/70 to-white border-red-300 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-start space-x-3">
+              <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                <span class="material-symbols-outlined text-[20px]">block</span>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-red-900">Workflow Execution Halted</h3>
+                <p class="text-xs text-red-700 mt-0.5">
+                  A required step was rejected during review. Downstream automated actions and third-party credential dispatches have been immediately halted for security and compliance.
+                </p>
+              </div>
+            </div>
+            <button (click)="resumeWorkflow()" class="btn-pill-mint text-xs !py-2.5 !px-6 shrink-0 shadow-mint-glow hover:!bg-ink hover:!text-white transition-all">
+              <span class="material-symbols-outlined text-[16px]">replay</span>
+              <span>Reopen & Resume Workflow</span>
+            </button>
+          </div>
+        }
 
         <!-- Human-in-the-Loop Attention Banner (if awaiting approval) -->
         @if (hasPendingApproval()) {
@@ -169,6 +202,8 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
                 [ngClass]="{
                   'border-mint/50 bg-mint/5': step.status === 'running',
                   'border-brand-warn/50 bg-amber-50/30': step.status === 'awaiting_approval',
+                  'border-red-300 bg-red-50/20': step.status === 'rejected',
+                  'border-slate-200 bg-slate-50/40': step.status === 'skipped',
                   'border-hairline bg-white': step.status === 'completed' || step.status === 'pending'
                 }"
               >
@@ -183,12 +218,17 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
                         'bg-emerald-500 text-white': step.status === 'completed',
                         'bg-brand-warn text-white animate-pulse': step.status === 'awaiting_approval',
                         'bg-mint text-ink animate-spin': step.status === 'running',
-                        'bg-surface border border-hairline text-steel': step.status === 'pending',
-                        'bg-red-500 text-white': step.status === 'failed'
+                        'bg-red-500 text-white': step.status === 'rejected' || step.status === 'failed',
+                        'bg-slate-400 text-white': step.status === 'skipped',
+                        'bg-surface border border-hairline text-steel': step.status === 'pending'
                       }"
                     >
                       @if (step.status === 'completed') {
                         <span class="material-symbols-outlined text-[16px]">check</span>
+                      } @else if (step.status === 'rejected' || step.status === 'failed') {
+                        <span class="material-symbols-outlined text-[16px]">close</span>
+                      } @else if (step.status === 'skipped') {
+                        <span class="material-symbols-outlined text-[16px]">redo</span>
                       } @else {
                         <span>{{ idx + 1 }}</span>
                       }
@@ -216,6 +256,18 @@ import { ConfirmDeleteDialogComponent } from '../../components/confirm-delete-di
                       @case ('awaiting_approval') {
                         <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-medium">
                           Awaiting Approval
+                        </span>
+                      }
+                      @case ('rejected') {
+                        <span class="px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-[11px] font-medium flex items-center space-x-1">
+                          <span class="material-symbols-outlined text-[13px]">block</span>
+                          <span>Rejected & Halted</span>
+                        </span>
+                      }
+                      @case ('skipped') {
+                        <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300 text-[11px] font-medium flex items-center space-x-1">
+                          <span class="material-symbols-outlined text-[13px]">redo</span>
+                          <span>Skipped</span>
                         </span>
                       }
                       @case ('running') {
@@ -427,6 +479,16 @@ export class OnboardingDetailComponent implements OnInit {
         setTimeout(() => this.refresh(), 800);
       }
     });
+  }
+
+  /**
+   * Resume an autonomous workflow that was halted after step rejection.
+   */
+  resumeWorkflow(): void {
+    const caseId = this.caseId();
+    if (!caseId) return;
+    this.onboardingFacade.resumeWorkflow(caseId);
+    setTimeout(() => this.refresh(), 800);
   }
 
   /**
