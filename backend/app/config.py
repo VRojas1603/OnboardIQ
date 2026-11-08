@@ -14,9 +14,9 @@ from dotenv import load_dotenv
 root_dir = Path(__file__).resolve().parent.parent.parent
 env_path = root_dir / ".env"
 if env_path.exists():
-    load_dotenv(dotenv_path=env_path)
+    load_dotenv(dotenv_path=env_path, override=True)
 else:
-    load_dotenv()
+    load_dotenv(override=True)
 
 class Settings(BaseSettings):
     """
@@ -49,6 +49,22 @@ class Settings(BaseSettings):
     SMTP_USER: str = os.getenv("SMTP_USER", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "OnboardIQ People Operations")
+
+    @property
+    def resolved_database_url(self) -> str:
+        """
+        Resolves relative SQLite database URLs to an absolute canonical path pointing to
+        backend/onboardiq.db, ensuring CLI tools, test suites, and uvicorn share the exact same database.
+        
+        Returns:
+            str: Normalized SQLAlchemy database URL.
+        """
+        if self.DATABASE_URL.startswith("sqlite:///"):
+            raw_path = self.DATABASE_URL[len("sqlite:///"):]
+            if not os.path.isabs(raw_path) and ":memory:" not in raw_path:
+                abs_path = (root_dir / "backend" / "onboardiq.db").resolve()
+                return f"sqlite:///{abs_path.as_posix()}"
+        return self.DATABASE_URL
 
     @property
     def cors_origins_list(self) -> list[str]:

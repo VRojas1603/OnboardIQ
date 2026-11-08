@@ -10,10 +10,10 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.config import settings
 
 # SQLite specific connect_args to allow multithreaded requests
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+connect_args = {"check_same_thread": False} if settings.resolved_database_url.startswith("sqlite") else {}
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.resolved_database_url,
     connect_args=connect_args
 )
 

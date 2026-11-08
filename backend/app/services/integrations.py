@@ -30,7 +30,7 @@ class SlackService:
         self.bot_token = settings.SLACK_BOT_TOKEN
         self.default_channel = settings.SLACK_DEFAULT_CHANNEL
 
-    def post_welcome_announcement(self, hire_name: str, role: str, department: str, start_date: str, manager_name: str) -> dict[str, Any]:
+    def post_welcome_announcement(self, hire_name: str, role: str, department: str, start_date: str, manager_name: str, channel: str | None = None) -> dict[str, Any]:
         """
         Post a rich Slack Block Kit welcome card announcing a new employee to the team channel.
 
@@ -44,13 +44,16 @@ class SlackService:
         Returns:
             dict payload indicating delivery mode ('live' or 'simulated'), timestamp, and channel metadata.
         """
+        target_raw = channel or self.default_channel
+        channel_id = target_raw.lstrip("#") if target_raw else "hackathon-demo"
+
         if not self.bot_token:
             logger.info("SLACK_BOT_TOKEN not provided. Returning simulated Slack dispatch.")
             return {
                 "delivered": True,
                 "mode": "simulated",
-                "channel": f"#{self.default_channel}",
-                "message": f"Welcome announcement for {hire_name} published to #{self.default_channel}",
+                "channel": f"#{channel_id}",
+                "message": f"Welcome announcement for {hire_name} published to #{channel_id}",
                 "timestamp": "1730937600.000100"
             }
 
@@ -59,9 +62,6 @@ class SlackService:
             "Authorization": f"Bearer {self.bot_token}",
             "Content-Type": "application/json"
         }
-        
-        # Clean channel identifier (Slack API prefers channel name without '#' or channel ID)
-        channel_id = self.default_channel.lstrip("#") if self.default_channel else "general"
         
         # Slack Blocks payload
         blocks = [

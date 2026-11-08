@@ -198,13 +198,14 @@ class WorkflowEngine:
 
                 elif step.step_key == "provision_slack":
                     # Create approval for team announcement
+                    clean_ch = slack_service.default_channel.lstrip("#") if slack_service.default_channel else "hackathon-demo"
                     approval = ApprovalItem(
                         step_id=step.id,
                         case_id=case.id,
                         preview_data={
                             "title": f"Approve Slack Team Announcement for {case.hire_name}",
-                            "summary": f"Post official introduction and welcome banner into #{slack_service.default_channel}.",
-                            "target_channel": f"#{slack_service.default_channel}",
+                            "summary": f"Post official introduction and welcome banner into #{clean_ch}.",
+                            "target_channel": f"#{clean_ch}",
                             "hire_name": case.hire_name,
                             "role": case.role,
                             "department": case.department
@@ -379,6 +380,12 @@ class WorkflowEngine:
                     "email": email_content,
                     "dispatch_receipt": email_res
                 }
+                if not email_res.get("delivered", False):
+                    step.status = "failed"
+                    step.error_message = email_res.get("error") or email_res.get("message") or "Failed to deliver welcome email via Gmail SMTP"
+                    case.status = "failed"
+                    db.commit()
+                    return approval
             
             step.status = "completed"
             step.completed_at = datetime.utcnow()
