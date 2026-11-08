@@ -93,7 +93,7 @@ def list_onboarding_cases(db: Session = Depends(get_db)):
     results = []
     for c in cases:
         total = len(c.steps)
-        completed = sum(1 for s in c.steps if s.status in ["completed", "skipped"])
+        completed = sum(1 for s in c.steps if s.status == "completed")
         pending_apps = sum(1 for a in c.approvals if a.decision == "pending")
         results.append(
             OnboardingCaseSummary(
@@ -156,3 +156,27 @@ def delete_onboarding_case(case_id: int, db: Session = Depends(get_db)):
     db.delete(case)
     db.commit()
     return None
+
+@router.post("/{case_id}/resume", response_model=OnboardingCaseDetailResponse)
+def resume_onboarding_case(case_id: int, db: Session = Depends(get_db)):
+    """
+    Un-halt and resume a halted onboarding case, re-opening rejected step(s) for managerial review.
+
+    Args:
+        case_id: Primary key ID of the onboarding case.
+        db: Active SQLAlchemy database session.
+
+    Returns:
+        The updated OnboardingCase with re-opened steps and approval gates.
+
+    Raises:
+        HTTPException: 404 if case not found, 400 if case is not halted.
+    """
+    case = db.query(OnboardingCase).filter(OnboardingCase.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Onboarding case not found")
+    if case.status != "halted":
+        raise HTTPException(status_code=400, detail=f"Case cannot be resumed from status '{case.status}'")
+
+    updated_case = workflow_engine.resume_workflow(case_id, db)
+    return updated_case

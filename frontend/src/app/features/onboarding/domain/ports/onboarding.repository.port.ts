@@ -66,4 +66,11 @@ export abstract class OnboardingRepositoryPort {
    * @param id Primary key ID of the onboarding case to delete.
    */
   abstract deleteCase(id: number): Observable<void>;
+
+  /**
+   * Un-halt and resume a halted onboarding case, re-opening rejected step(s).
+   *
+   * @param id Primary key ID of the onboarding case to resume.
+   */
+  abstract resumeWorkflow(id: number): Observable<OnboardingCase>;
 }

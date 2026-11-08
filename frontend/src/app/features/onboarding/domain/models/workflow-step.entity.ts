@@ -6,7 +6,7 @@
  */
 
 /** Possible execution states for a workflow step */
-export type StepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'awaiting_approval' | 'skipped';
+export type StepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'awaiting_approval' | 'skipped' | 'rejected';
 
 /**
  * Polymorphic output dictionary generated upon step execution.
