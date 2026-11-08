@@ -188,6 +188,27 @@ export class OnboardingFacade implements OnDestroy {
   /**
    * Dispose subscriptions upon facade destruction.
    */
+  /**
+   * Un-halt and resume a halted onboarding case.
+   *
+   * @param id Target case ID.
+   */
+  resumeWorkflow(id: number): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.repo.resumeWorkflow(id).subscribe({
+      next: (updated: OnboardingCase) => {
+        this.activeCase.set(updated);
+        this.cases.update(prev => prev.map(c => c.id === id ? updated : c));
+        this.loading.set(false);
+      },
+      error: (err: any) => {
+        this.error.set(err?.message || `Failed to resume case #${id}`);
+        this.loading.set(false);
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     this.stopPolling();
   }

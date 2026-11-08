@@ -74,7 +74,7 @@ export function calculateCaseProgress(caseItem: OnboardingCase): number {
     return Math.round((caseItem.completedSteps / caseItem.totalSteps) * 100);
   }
   if (!caseItem.steps || caseItem.steps.length === 0) return 0;
-  const completedCount = caseItem.steps.filter(s => s.status === 'completed' || s.status === 'skipped').length;
+  const completedCount = caseItem.steps.filter(s => s.status === 'completed').length;
   return Math.round((completedCount / caseItem.steps.length) * 100);
 }
 
