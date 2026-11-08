@@ -60,6 +60,7 @@ def create_onboarding_case(
         manager_name=payload.manager_name,
         manager_email=payload.manager_email,
         start_date=payload.start_date,
+        github_username=payload.github_username,
         status="created"
     )
     db.add(case)
@@ -135,3 +136,23 @@ def get_onboarding_case(case_id: int, db: Session = Depends(get_db)):
     if not case:
         raise HTTPException(status_code=404, detail="Onboarding case not found")
     return case
+
+@router.delete("/{case_id}", status_code=204)
+def delete_onboarding_case(case_id: int, db: Session = Depends(get_db)):
+    """
+    Delete an onboarding case and all associated cascading workflow steps and approval items.
+
+    Args:
+        case_id: Primary key ID of the onboarding case.
+        db: Active SQLAlchemy database session.
+
+    Raises:
+        HTTPException: 404 if case is not found.
+    """
+    case = db.query(OnboardingCase).filter(OnboardingCase.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Onboarding case not found")
+
+    db.delete(case)
+    db.commit()
+    return None

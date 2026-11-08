@@ -159,6 +159,33 @@ export class OnboardingFacade implements OnDestroy {
   }
 
   /**
+   * Delete an onboarding case, update reactive signals, and optionally navigate back to dashboard.
+   *
+   * @param id Primary key of the case to delete.
+   * @param navigateToDashboard Whether to redirect to /dashboard after deletion (default: true).
+   */
+  deleteCase(id: number, navigateToDashboard: boolean = true): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.repo.deleteCase(id).subscribe({
+      next: () => {
+        this.cases.update(prev => prev.filter(c => c.id !== id));
+        if (this.activeCase()?.id === id) {
+          this.activeCase.set(null);
+        }
+        this.loading.set(false);
+        if (navigateToDashboard) {
+          this.router.navigate(['/dashboard']);
+        }
+      },
+      error: (err: any) => {
+        this.error.set(err?.message || `Failed to delete case #${id}`);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  /**
    * Dispose subscriptions upon facade destruction.
    */
   ngOnDestroy(): void {

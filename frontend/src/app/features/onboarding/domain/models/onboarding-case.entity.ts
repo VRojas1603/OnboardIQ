@@ -35,6 +35,9 @@ export interface OnboardingCase {
   /** Starting date string (e.g., '2026-03-01') */
   startDate: string;
 
+  /** Optional candidate GitHub username for org invitations */
+  githubUsername?: string;
+
   /** Overall case status ('created' | 'running' | 'awaiting_approval' | 'completed' | 'failed') */
   status: string;
 

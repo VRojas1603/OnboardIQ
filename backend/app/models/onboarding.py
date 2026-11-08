@@ -39,6 +39,7 @@ class OnboardingCase(Base):
     manager_name: Mapped[str] = mapped_column(String(255), nullable=False)
     manager_email: Mapped[str] = mapped_column(String(255), nullable=False)
     start_date: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g. "2026-11-15"
+    github_username: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Status: created, running, awaiting_approval, completed, failed, cancelled
     status: Mapped[str] = mapped_column(String(50), default="created", nullable=False)
@@ -62,7 +63,7 @@ class WorkflowStep(Base):
     __tablename__ = "workflow_steps"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    case_id: Mapped[int] = mapped_column(ForeignKey("onboarding_cases.id"), nullable=False, index=True)
+    case_id: Mapped[int] = mapped_column(ForeignKey("onboarding_cases.id", ondelete="CASCADE"), nullable=False, index=True)
     step_key: Mapped[str] = mapped_column(String(100), nullable=False)  # e.g. "generate_documents", "provision_slack"
     step_label: Mapped[str] = mapped_column(String(255), nullable=False)
     order_index: Mapped[int] = mapped_column(nullable=False)
@@ -93,8 +94,8 @@ class ApprovalItem(Base):
     __tablename__ = "approval_items"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    step_id: Mapped[int] = mapped_column(ForeignKey("workflow_steps.id"), nullable=False, unique=True, index=True)
-    case_id: Mapped[int] = mapped_column(ForeignKey("onboarding_cases.id"), nullable=False, index=True)
+    step_id: Mapped[int] = mapped_column(ForeignKey("workflow_steps.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    case_id: Mapped[int] = mapped_column(ForeignKey("onboarding_cases.id", ondelete="CASCADE"), nullable=False, index=True)
     
     # Preview data presented to HR/IT reviewer (AI generated email, provision credentials, etc.)
     preview_data: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)

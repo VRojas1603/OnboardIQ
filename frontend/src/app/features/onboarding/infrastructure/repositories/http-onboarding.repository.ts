@@ -57,4 +57,14 @@ export class HttpOnboardingRepository implements OnboardingRepositoryPort {
       map(OnboardingMapper.fromDetailDto)
     );
   }
+
+  /**
+   * Delete an onboarding case and all associated execution data.
+   *
+   * @param id Target case ID.
+   * @returns Observable emitting void upon completion.
+   */
+  deleteCase(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
 }
