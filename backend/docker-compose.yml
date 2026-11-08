@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: onboardiq_backend
+    restart: unless-stopped
+    ports:
+      - "8080:8000"
+    env_file:
+      - path: .env
+        required: false
+      - path: ../.env
+        required: false
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - BACKEND_PORT=8000
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5432/postgres}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
