@@ -111,7 +111,7 @@ class WorkflowEngine:
             db: Active SQLAlchemy database session.
         """
         case = db.query(OnboardingCase).filter(OnboardingCase.id == case_id).first()
-        if not case or case.status in ["completed", "cancelled", "failed"]:
+        if not case or case.status in ["completed", "cancelled", "failed", "halted"]:
             return
 
         case.status = "running"
@@ -125,6 +125,11 @@ class WorkflowEngine:
                 continue
 
             # If a step is currently awaiting approval, the workflow must pause
+            if step.status == "rejected":
+                case.status = "halted"
+                db.commit()
+                return
+
             if step.status == "awaiting_approval":
                 case.status = "awaiting_approval"
                 db.commit()
@@ -312,6 +317,11 @@ class WorkflowEngine:
                 return
 
         # Check if all steps are completed or skipped
+        if any(s.status == "rejected" for s in steps):
+            case.status = "halted"
+            db.commit()
+            return
+
         all_done = all(s.status in ["completed", "skipped"] for s in steps)
         if all_done:
             case.status = "completed"
@@ -389,6 +399,15 @@ class WorkflowEngine:
             
             step.status = "completed"
             step.completed_at = datetime.utcnow()
+            db.commit()
+            WorkflowEngine.run_workflow(case.id, db)
+            return approval
+        elif decision == "rejected":
+            step.status = "rejected"
+            step.completed_at = datetime.utcnow()
+            case.status = "halted"
+            db.commit()
+            return approval
         else:
             # Mark as skipped
             step.status = "skipped"
@@ -399,5 +418,28 @@ class WorkflowEngine:
         # Resume the workflow to advance to the next step
         WorkflowEngine.run_workflow(case.id, db)
         return approval
+
+    @staticmethod
+    def resume_workflow(case_id: int, db: Session) -> OnboardingCase | None:
+        """
+        Un-halt and resume a halted onboarding case.
+        Resets any 'rejected' step back to 'awaiting_approval' and reactivates its approval gate.
+        """
+        case = db.query(OnboardingCase).filter(OnboardingCase.id == case_id).first()
+        if not case or case.status != "halted":
+            return case
+
+        # Find any rejected step(s) and re-open them
+        for step in case.steps:
+            if step.status == "rejected":
+                step.status = "awaiting_approval"
+                step.completed_at = None
+                if step.approval_item:
+                    step.approval_item.decision = "pending"
+                    step.approval_item.decided_at = None
+
+        case.status = "awaiting_approval"
+        db.commit()
+        return case
 
 workflow_engine = WorkflowEngine()
