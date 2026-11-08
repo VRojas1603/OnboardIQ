@@ -37,7 +37,18 @@ class Settings(BaseSettings):
 
     # Slack Integration
     SLACK_BOT_TOKEN: str = os.getenv("SLACK_BOT_TOKEN", "")
-    SLACK_DEFAULT_CHANNEL: str = os.getenv("SLACK_DEFAULT_CHANNEL", "general")
+    SLACK_DEFAULT_CHANNEL: str = os.getenv("SLACK_DEFAULT_CHANNEL", "hackathon-demo")
+
+    # GitHub Organization Integration
+    GITHUB_TOKEN: str = os.getenv("GITHUB_TOKEN", "")
+    GITHUB_ORG: str = os.getenv("GITHUB_ORG", "TestCompany-OnboardIQ-Demo")
+
+    # Gmail SMTP Dispatch Settings
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "OnboardIQ People Operations")
 
     @property
     def cors_origins_list(self) -> list[str]:
