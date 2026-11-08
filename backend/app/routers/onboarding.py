@@ -60,6 +60,7 @@ def create_onboarding_case(
         manager_name=payload.manager_name,
         manager_email=payload.manager_email,
         start_date=payload.start_date,
+        github_username=payload.github_username,
         status="created"
     )
     db.add(case)

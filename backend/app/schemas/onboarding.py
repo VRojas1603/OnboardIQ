@@ -28,6 +28,7 @@ class OnboardingCaseCreate(BaseModel):
     manager_name: str = Field(description="Name of the reporting manager", examples=["Alex Smith"])
     manager_email: EmailStr = Field(description="Corporate email of the manager", examples=["alex.smith@example.com"])
     start_date: str = Field(description="Target start date (YYYY-MM-DD)", examples=["2026-11-15"])
+    github_username: Optional[str] = Field(default=None, description="Candidate GitHub username for org invitation", examples=["octocat"])
 
 class ApprovalDecisionRequest(BaseModel):
     """
@@ -85,6 +86,7 @@ class OnboardingCaseSummary(BaseModel):
     manager_name: str
     manager_email: str
     start_date: str
+    github_username: Optional[str] = None
     status: str
     created_at: datetime
     updated_at: datetime
@@ -107,6 +109,7 @@ class OnboardingCaseDetailResponse(BaseModel):
     manager_name: str
     manager_email: str
     start_date: str
+    github_username: Optional[str] = None
     status: str
     created_at: datetime
     updated_at: datetime

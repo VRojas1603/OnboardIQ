@@ -45,3 +45,11 @@ def init_db():
     # Import models here so Base knows about all tables
     import app.models.onboarding
     Base.metadata.create_all(bind=engine)
+
+    # Auto-migrate github_username column for existing SQLite databases
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE onboarding_cases ADD COLUMN github_username VARCHAR(100)"))
+    except Exception:
+        pass

@@ -39,6 +39,7 @@ class OnboardingCase(Base):
     manager_name: Mapped[str] = mapped_column(String(255), nullable=False)
     manager_email: Mapped[str] = mapped_column(String(255), nullable=False)
     start_date: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g. "2026-11-15"
+    github_username: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Status: created, running, awaiting_approval, completed, failed, cancelled
     status: Mapped[str] = mapped_column(String(50), default="created", nullable=False)
