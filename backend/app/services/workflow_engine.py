@@ -16,7 +16,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from app.models.onboarding import OnboardingCase, WorkflowStep, ApprovalItem
 from app.services.ai_service import ai_service
-from app.services.integrations import slack_service, google_service, github_service
+from app.services.integrations import slack_service, identity_service, google_service, github_service, email_service
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,8 @@ STEP_DEFINITIONS = [
         "requires_approval": True
     },
     {
-        "step_key": "provision_google",
-        "step_label": "Google Workspace & Identity Provisioning",
+        "step_key": "provision_identity",
+        "step_label": "Corporate Identity & SSO Directory Provisioning",
         "order_index": 2,
         "requires_approval": True
     },
@@ -42,7 +42,7 @@ STEP_DEFINITIONS = [
     },
     {
         "step_key": "provision_github",
-        "step_label": "GitHub Organization & Team Repositories",
+        "step_label": "GitHub Organization & Team Repositories (TestCompany-OnboardIQ-Demo)",
         "order_index": 4,
         "requires_approval": True
     },
@@ -54,7 +54,7 @@ STEP_DEFINITIONS = [
     },
     {
         "step_key": "send_welcome_email",
-        "step_label": "Day 0 Formal Welcome Email Dispatch",
+        "step_label": "Day 0 Formal Welcome Email Dispatch (Gmail SMTP)",
         "order_index": 6,
         "requires_approval": True
     },
@@ -175,18 +175,18 @@ class WorkflowEngine:
                     db.commit()
                     return # Stop and wait for human approval
 
-                elif step.step_key == "provision_google":
-                    google_payload = google_service.provision_account(case.hire_name, case.department)
-                    step.output_data = google_payload
+                elif step.step_key in ("provision_identity", "provision_google"):
+                    identity_payload = identity_service.provision_identity(case.hire_name, case.department, case.role)
+                    step.output_data = identity_payload
 
                     # Needs approval before activating account
                     approval = ApprovalItem(
                         step_id=step.id,
                         case_id=case.id,
                         preview_data={
-                            "title": f"Approve Google Workspace Creation: {google_payload['corporate_email']}",
-                            "summary": f"Authorize identity creation in {google_payload['org_unit']} and grant access to {len(google_payload['groups_assigned'])} distribution groups.",
-                            "details": google_payload
+                            "title": f"Approve Corporate Identity & SSO Profile: {identity_payload['corporate_email']}",
+                            "summary": f"Authorize SSO directory provisioning in {identity_payload['org_unit']} with {len(identity_payload['groups_assigned'])} RBAC groups and Enterprise SSO Security Vault.",
+                            "details": identity_payload
                         },
                         decision="pending"
                     )
@@ -198,13 +198,14 @@ class WorkflowEngine:
 
                 elif step.step_key == "provision_slack":
                     # Create approval for team announcement
+                    clean_ch = slack_service.default_channel.lstrip("#") if slack_service.default_channel else "hackathon-demo"
                     approval = ApprovalItem(
                         step_id=step.id,
                         case_id=case.id,
                         preview_data={
                             "title": f"Approve Slack Team Announcement for {case.hire_name}",
-                            "summary": f"Post official introduction and welcome banner into #{slack_service.default_channel}.",
-                            "target_channel": f"#{slack_service.default_channel}",
+                            "summary": f"Post official introduction and welcome banner into #{clean_ch}.",
+                            "target_channel": f"#{clean_ch}",
                             "hire_name": case.hire_name,
                             "role": case.role,
                             "department": case.department
@@ -218,15 +219,23 @@ class WorkflowEngine:
                     return
 
                 elif step.step_key == "provision_github":
-                    gh_payload = github_service.provision_team_access(case.hire_name, case.department, case.role)
+                    gh_payload = {
+                        "organization": github_service.org,
+                        "candidate_name": case.hire_name,
+                        "candidate_email": case.hire_email,
+                        "github_username": case.github_username or "Will invite by email",
+                        "target_role": "Member",
+                        "status": "Ready to dispatch invitation via GitHub REST API"
+                    }
                     step.output_data = gh_payload
 
+                    target_desc = f"@{case.github_username}" if case.github_username else case.hire_email
                     approval = ApprovalItem(
                         step_id=step.id,
                         case_id=case.id,
                         preview_data={
-                            "title": f"Approve GitHub Org Invitation for @{gh_payload['github_username']}",
-                            "summary": f"Grant member role in {gh_payload['organization']} with access to {len(gh_payload['teams_assigned'])} core teams.",
+                            "title": f"Authorize GitHub Org Invitation for {target_desc}",
+                            "summary": f"Grant member role in {github_service.org} and dispatch live invitation via GitHub REST API.",
                             "details": gh_payload
                         },
                         decision="pending"
@@ -240,12 +249,12 @@ class WorkflowEngine:
                 elif step.step_key == "schedule_training":
                     training_sessions = [
                         {"session": "Company Culture & Global Onboarding Kickoff", "date": f"{case.start_date} 10:00 AM", "duration": "60m", "host": "People Ops"},
-                        {"session": "IT Security, 1Password & MFA Compliance", "date": f"{case.start_date} 2:00 PM", "duration": "45m", "host": "SecOps"},
+                        {"session": "IT Security, Enterprise SSO & MFA Compliance", "date": f"{case.start_date} 2:00 PM", "duration": "45m", "host": "SecOps"},
                         {"session": f"{case.department} Architecture & Sprint Workflow", "date": f"{case.start_date} Day 2 11:00 AM", "duration": "90m", "host": case.manager_name}
                     ]
                     step.output_data = {
                         "calendar_events_booked": training_sessions,
-                        "status": "Confirmed on Google Calendar"
+                        "status": "Confirmed on Corporate Calendar"
                     }
                     step.status = "completed"
                     step.completed_at = datetime.utcnow()
@@ -262,7 +271,9 @@ class WorkflowEngine:
 
                     step.output_data = {
                         "recipient": case.hire_email,
-                        "email": email_content
+                        "email": email_content,
+                        "smtp_server": "smtp.gmail.com:587",
+                        "status": "Staged for outbound dispatch via Gmail SMTP"
                     }
 
                     approval = ApprovalItem(
@@ -270,7 +281,7 @@ class WorkflowEngine:
                         case_id=case.id,
                         preview_data={
                             "title": f"Authorize Welcome Email Dispatch to {case.hire_email}",
-                            "summary": f"Confirm outbound sending of Day 0 welcome email for {case.hire_name}.",
+                            "summary": f"Confirm outbound sending of Day 0 welcome email for {case.hire_name} via Gmail SMTP.",
                             "recipient": case.hire_email,
                             "email": email_content
                         },
@@ -332,12 +343,49 @@ class WorkflowEngine:
         case = approval.case
 
         if decision == "approved":
-            # Execute actual external action if step has one
+            # Execute actual external actions upon human approval
             if step.step_key == "provision_slack":
                 slack_res = slack_service.post_welcome_announcement(
                     case.hire_name, case.role, case.department, case.start_date, case.manager_name
                 )
                 step.output_data = slack_res
+
+            elif step.step_key == "provision_github":
+                gh_res = github_service.invite_member(
+                    hire_name=case.hire_name,
+                    hire_email=case.hire_email,
+                    github_username=case.github_username,
+                    department=case.department
+                )
+                step.output_data = gh_res
+
+            elif step.step_key == "send_welcome_email":
+                # Extract AI generated email content from step output
+                email_content = step.output_data.get("email") if isinstance(step.output_data, dict) else None
+                subject_val: str = f"Welcome to the Team, {case.hire_name}! 🎉"
+                body_val: str = ""
+                if isinstance(email_content, dict):
+                    subject_val = str(email_content.get("subject") or subject_val)
+                    body_val = str(email_content.get("body") or "")
+                elif email_content:
+                    body_val = str(email_content)
+
+                email_res = email_service.send_welcome_email(
+                    recipient_email=case.hire_email,
+                    recipient_name=case.hire_name,
+                    subject=subject_val,
+                    body_text=body_val
+                )
+                step.output_data = {
+                    "email": email_content,
+                    "dispatch_receipt": email_res
+                }
+                if not email_res.get("delivered", False):
+                    step.status = "failed"
+                    step.error_message = email_res.get("error") or email_res.get("message") or "Failed to deliver welcome email via Gmail SMTP"
+                    case.status = "failed"
+                    db.commit()
+                    return approval
             
             step.status = "completed"
             step.completed_at = datetime.utcnow()

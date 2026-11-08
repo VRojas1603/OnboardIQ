@@ -22,6 +22,7 @@ interface DemoPreset {
   managerName: string;
   managerEmail: string;
   startDate: string;
+  githubUsername?: string;
 }
 
 @Component({
@@ -159,7 +160,7 @@ interface DemoPreset {
             </div>
 
             <!-- Start Date -->
-            <div class="sm:col-span-2">
+            <div>
               <label class="block text-xs font-semibold text-ink mb-1.5">
                 First Day (Start Date) <span class="text-brand-error">*</span>
               </label>
@@ -168,6 +169,21 @@ interface DemoPreset {
                 [(ngModel)]="startDate" 
                 name="startDate" 
                 required 
+                class="w-full text-sm px-3.5 py-2.5 rounded-lg bg-surface border border-hairline focus:border-mint focus:bg-white focus:outline-none transition-colors"
+              />
+            </div>
+
+            <!-- Candidate GitHub Username (Optional) -->
+            <div>
+              <label class="block text-xs font-semibold text-ink mb-1.5 flex items-center justify-between">
+                <span>GitHub Username</span>
+                <span class="text-steel font-normal text-[11px]">(Optional)</span>
+              </label>
+              <input 
+                type="text" 
+                [(ngModel)]="githubUsername" 
+                name="githubUsername" 
+                placeholder="e.g. octocat (receives Org invite)" 
                 class="w-full text-sm px-3.5 py-2.5 rounded-lg bg-surface border border-hairline focus:border-mint focus:bg-white focus:outline-none transition-colors"
               />
             </div>
@@ -183,7 +199,7 @@ interface DemoPreset {
             <ul class="list-disc pl-5 space-y-1 text-steel">
               <li>Step 1 immediately invokes <strong>Vultr Serverless Inference (Llama-3.3-70B)</strong> to generate a personalized Welcome Email, 30-Day Roadmap, and IT Equipment Checklist.</li>
               <li>Workflow will automatically pause at <strong>Step 2 (Human-in-the-Loop Review)</strong> for manager sign-off before provisioning credentials.</li>
-              <li>Upon approval, accounts on Google Workspace, GitHub Enterprise, and Slack are provisioned autonomously.</li>
+              <li>Upon approval, accounts on Corporate Identity, GitHub Organization (TestCompany-OnboardIQ-Demo), and Slack announcements are provisioned autonomously, followed by Day 0 Welcome Email delivery via Gmail SMTP.</li>
             </ul>
           </div>
 
@@ -232,6 +248,7 @@ export class NewHireComponent {
   managerName = 'Jordan Taylor';
   managerEmail = 'jordan.taylor@example.com';
   startDate = '2026-11-15';
+  githubUsername = '';
 
   /** Injected facade loading and error signals */
   readonly loading = this.onboardingFacade.loading;
@@ -247,7 +264,8 @@ export class NewHireComponent {
       department: 'Infrastructure',
       managerName: 'Jordan Taylor',
       managerEmail: 'jordan.taylor@example.com',
-      startDate: '2026-11-15'
+      startDate: '2026-11-15',
+      githubUsername: 'alex-rivera-dev'
     },
     {
       label: 'Lead Product Designer',
@@ -257,7 +275,8 @@ export class NewHireComponent {
       department: 'Product & Design',
       managerName: 'Sarah Chen',
       managerEmail: 'sarah.chen@example.com',
-      startDate: '2026-11-20'
+      startDate: '2026-11-20',
+      githubUsername: 'elena-rostova-design'
     },
     {
       label: 'AI Research Scientist',
@@ -267,7 +286,8 @@ export class NewHireComponent {
       department: 'Machine Learning',
       managerName: 'Dr. Marcus Vance',
       managerEmail: 'marcus.vance@example.com',
-      startDate: '2026-12-01'
+      startDate: '2026-12-01',
+      githubUsername: 'kaito-tanaka-ai'
     }
   ];
 
@@ -284,6 +304,7 @@ export class NewHireComponent {
     this.managerName = preset.managerName;
     this.managerEmail = preset.managerEmail;
     this.startDate = preset.startDate;
+    this.githubUsername = preset.githubUsername || '';
   }
 
   /**
@@ -306,6 +327,7 @@ export class NewHireComponent {
       managerName: this.managerName,
       managerEmail: this.managerEmail,
       startDate: this.startDate,
+      githubUsername: this.githubUsername.trim() || undefined,
     });
   }
 }

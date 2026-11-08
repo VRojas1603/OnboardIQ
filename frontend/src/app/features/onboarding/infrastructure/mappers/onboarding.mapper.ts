@@ -54,6 +54,7 @@ export class OnboardingMapper {
       managerName: dto.manager_name,
       managerEmail: dto.manager_email,
       startDate: dto.start_date,
+      githubUsername: dto.github_username,
       status: dto.status,
       createdAt: dto.created_at,
       updatedAt: dto.updated_at,
@@ -83,6 +84,7 @@ export class OnboardingMapper {
       managerName: dto.manager_name,
       managerEmail: dto.manager_email,
       startDate: dto.start_date,
+      githubUsername: dto.github_username,
       status: dto.status,
       createdAt: dto.created_at,
       updatedAt: dto.updated_at,
@@ -109,6 +111,7 @@ export class OnboardingMapper {
       manager_name: params.managerName,
       manager_email: params.managerEmail,
       start_date: params.startDate,
+      github_username: params.githubUsername,
     };
   }
 }

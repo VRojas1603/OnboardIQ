@@ -34,6 +34,7 @@ export interface OnboardingCaseSummaryDto {
   manager_name: string;
   manager_email: string;
   start_date: string;
+  github_username?: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -54,6 +55,7 @@ export interface OnboardingCaseDetailDto {
   manager_name: string;
   manager_email: string;
   start_date: string;
+  github_username?: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -72,4 +74,5 @@ export interface OnboardingCaseCreateDto {
   manager_name: string;
   manager_email: string;
   start_date: string;
+  github_username?: string;
 }

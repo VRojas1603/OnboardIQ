@@ -10,10 +10,10 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.config import settings
 
 # SQLite specific connect_args to allow multithreaded requests
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+connect_args = {"check_same_thread": False} if settings.resolved_database_url.startswith("sqlite") else {}
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.resolved_database_url,
     connect_args=connect_args
 )
 
@@ -45,3 +45,11 @@ def init_db():
     # Import models here so Base knows about all tables
     import app.models.onboarding
     Base.metadata.create_all(bind=engine)
+
+    # Auto-migrate github_username column for existing SQLite databases
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE onboarding_cases ADD COLUMN github_username VARCHAR(100)"))
+    except Exception:
+        pass
