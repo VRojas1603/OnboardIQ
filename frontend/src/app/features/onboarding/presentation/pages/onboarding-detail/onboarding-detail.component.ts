@@ -83,6 +83,9 @@ import { ApprovalDialogComponent } from '../../../../approval/presentation/compo
             <div>
               <span class="text-steel block mb-1">Contact Email</span>
               <span class="font-mono text-ink truncate block">{{ c.employeeEmail }}</span>
+              @if (c.githubUsername) {
+                <span class="font-mono text-muted text-[11px] block truncate">@{{ c.githubUsername }}</span>
+              }
             </div>
 
             <div>

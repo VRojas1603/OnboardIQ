@@ -32,6 +32,9 @@ export interface CreateCaseParams {
 
   /** Scheduled first day of employment (YYYY-MM-DD) */
   startDate: string;
+
+  /** Optional candidate GitHub username for org invitations */
+  githubUsername?: string;
 }
 
 /**
