@@ -20,7 +20,7 @@ COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Filter envsubst so internal Nginx variables ($host, $uri, etc.) are untouched
-ENV NGINX_ENVSUBST_FILTER='${BACKEND_URL}'
+ENV NGINX_ENVSUBST_FILTER='BACKEND_URL'
 ENV BACKEND_URL=http://backend:8000
 
 EXPOSE 80
