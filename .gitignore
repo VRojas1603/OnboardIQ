@@ -85,6 +85,7 @@ lerna-debug.log*
 # Temporary Hackathon Research & Scratch Files
 # ==========================================
 docs/
+output/
 scratch/
 tmp/
 temp/

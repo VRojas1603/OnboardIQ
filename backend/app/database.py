@@ -2,19 +2,33 @@
 Database Engine & Session Management Module
 ============================================
 Establishes SQLAlchemy engine, declarative base, session factories,
-and database lifecycle management utilities for SQLite persistence.
+and database lifecycle management utilities for dual-mode SQLite and PostgreSQL/Supabase persistence.
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from app.config import settings
 
-# SQLite specific connect_args to allow multithreaded requests
-connect_args = {"check_same_thread": False} if settings.resolved_database_url.startswith("sqlite") else {}
+raw_db_url = settings.resolved_database_url
+
+connect_args = {}
+engine_kwargs = {}
+
+if raw_db_url.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+else:
+    # PostgreSQL / Supabase pool configuration
+    engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_recycle": 300,
+    })
 
 engine = create_engine(
-    settings.resolved_database_url,
-    connect_args=connect_args
+    raw_db_url,
+    connect_args=connect_args,
+    **engine_kwargs
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -46,10 +60,9 @@ def init_db():
     import app.models.onboarding
     Base.metadata.create_all(bind=engine)
 
-    # Auto-migrate github_username column for existing SQLite databases
-    from sqlalchemy import text
+    # Auto-migrate github_username column if missing
     try:
         with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE onboarding_cases ADD COLUMN github_username VARCHAR(100)"))
+            conn.execute(text("ALTER TABLE onboarding_cases ADD COLUMN IF NOT EXISTS github_username VARCHAR(100)"))
     except Exception:
         pass

@@ -1,0 +1,36 @@
+# Version control and IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Node / Angular
+node_modules
+frontend/node_modules
+frontend/dist
+frontend/.angular
+
+# Python virtual environments & caches
+.venv
+backend/.venv
+backend/venv
+venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache/
+
+# Databases & local state
+*.db
+*.sqlite
+*.sqlite3
+backend/onboardiq.db
+
+# Secrets & local env files
+.env
+backend/.env
+.env.*
+backend/.env.*
+!.env.example
+
+# Logs
+*.log

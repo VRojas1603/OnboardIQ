@@ -1,0 +1,3 @@
+#!/bin/sh
+# Auto-clean BACKEND_URL: strip any trailing slash so Nginx proxy_pass never produces double slashes (//)
+export BACKEND_URL="${BACKEND_URL%/}"

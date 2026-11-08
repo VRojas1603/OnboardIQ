@@ -56,19 +56,44 @@ class AIService:
             "max_tokens": 1200
         }
 
-        try:
-            with httpx.Client(timeout=25.0) as client:
-                response = client.post(url, headers=headers, json=payload)
-                if response.status_code == 200:
-                    data = response.json()
-                    content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    return content.strip()
+        max_retries = 3
+        backoff_seconds = 1.0
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                with httpx.Client(timeout=25.0) as client:
+                    response = client.post(url, headers=headers, json=payload)
+                    if response.status_code == 200:
+                        data = response.json()
+                        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                        return content.strip()
+                    elif response.status_code in [429, 500, 502, 503, 504]:
+                        logger.warning(f"Vultr Inference API attempt {attempt}/{max_retries} returned {response.status_code}. Retrying in {backoff_seconds}s...")
+                        if attempt < max_retries:
+                            import time
+                            time.sleep(backoff_seconds)
+                            backoff_seconds *= 2
+                            continue
+                        else:
+                            logger.error(f"Vultr Inference API failed after {max_retries} attempts ({response.status_code}): {response.text}")
+                            return ""
+                    else:
+                        logger.error(f"Vultr Inference API error {response.status_code}: {response.text}")
+                        return ""
+            except (httpx.TimeoutException, httpx.NetworkError) as e:
+                logger.warning(f"Vultr Inference API network error on attempt {attempt}/{max_retries}: {e}")
+                if attempt < max_retries:
+                    import time
+                    time.sleep(backoff_seconds)
+                    backoff_seconds *= 2
+                    continue
                 else:
-                    logger.error(f"Vultr Inference API error {response.status_code}: {response.text}")
+                    logger.error(f"Failed to communicate with Vultr Serverless Inference after {max_retries} attempts: {e}")
                     return ""
-        except Exception as e:
-            logger.error(f"Failed to communicate with Vultr Serverless Inference: {e}")
-            return ""
+            except Exception as e:
+                logger.error(f"Unexpected error communicating with Vultr Serverless Inference: {e}")
+                return ""
+        return ""
 
     def generate_welcome_email(self, hire_name: str, role: str, department: str, manager_name: str, start_date: str) -> dict:
         """

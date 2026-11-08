@@ -7,15 +7,6 @@ SQLAlchemy relational models defining the core domain entities:
 - `ApprovalItem`: Human-in-the-Loop governance gate for critical actions.
 """
 
-"""
-Onboarding Domain Database Models
-=================================
-SQLAlchemy relational models defining the core domain entities:
-- `OnboardingCase`: The aggregate root representing a candidate's onboarding journey.
-- `WorkflowStep`: An individual execution step in the 7-step lifecycle.
-- `ApprovalItem`: Human-in-the-Loop governance gate for critical actions.
-"""
-
 from datetime import datetime
 from typing import Optional, Any
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, JSON, Text
